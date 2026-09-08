@@ -2,7 +2,7 @@
    style.css
    ---------------------------------------------------------------------
    VE-com ログイン画面のデザイン(渡されたモックアップに準拠)。
-   HTML構造を変えたい場合も、data-auth属性さえ残せば動作は保たれます。
+   HTML構造を変えたい場合も、data-auth属性さえ残せば動作は保たれる。
 ===================================================================== */
 
 :root {
@@ -28,25 +28,25 @@ body {
 }
 
 /* ---- ログイン画面 ---- */
+/* グレーの部分がそのまま画面全体になるように、周りの余白は無くす */
 .login-screen {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .login-card {
   position: relative;
   overflow: hidden;
   width: 100%;
-  max-width: 680px;
+  min-height: 100vh;
   padding: 56px 64px;
   background: var(--color-card-bg);
-  border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 32px;
 }
 
