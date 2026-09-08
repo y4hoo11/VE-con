@@ -1,0 +1,54 @@
+# ==========================================
+# 共通 (OS / IDE / エディタ)
+# ==========================================
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+# 開発用環境変数 (機密情報が含まれるため除外)
+.env
+.env.local
+.env.*.local
+
+# ==========================================
+# 1. Edge AI / ROS 2 (edge_ai/)
+# ==========================================
+# colcon build による自動生成物 (手元環境依存のため除外)
+edge_ai/ros2_ws/build/
+edge_ai/ros2_ws/install/
+edge_ai/ros2_ws/log/
+
+# Pythonのキャッシュ
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# ==========================================
+# 2. Web Frontend (frontend/)
+# ==========================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.pnpm-debug.log*
+
+# ==========================================
+# 3. Web Backend (backend/)
+# ==========================================
+backend/node_modules/
+backend/dist/
+backend/build/
+
+# ==========================================
+# 4. Hardware / Firmware (firmware/)
+# ==========================================
+# PlatformIO ビルド生成物
+firmware/.pio/
+firmware/.clang_complete
+firmware/.gcc-flags.json

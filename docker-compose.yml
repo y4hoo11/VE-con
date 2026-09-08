@@ -1,0 +1,11 @@
+services:
+  ros2_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ve_con_ros2
+    volumes:
+        - ./edge_ai/ros2_ws:/workspace/ros2_ws
+    tty: true
+    stdin_open: true
+    network_mode: host # ROS 2トピック通信のローカル疎通を円滑化
