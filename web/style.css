@@ -1,0 +1,197 @@
+/* =====================================================================
+   style.css
+   ---------------------------------------------------------------------
+   VE-com ログイン画面のデザイン(渡されたモックアップに準拠)。
+   HTML構造を変えたい場合も、data-auth属性さえ残せば動作は保たれます。
+===================================================================== */
+
+:root {
+  --color-page-bg: #eef0f3;
+  --color-card-bg: #6e6e6e;
+  --color-green: #6fcf43;
+  --color-text-dark: #161616;
+  --color-white: #ffffff;
+  --color-error: #ff6b6b;
+  --font-base: system-ui, -apple-system, "Hiragino Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-page-bg);
+  color: var(--color-text-dark);
+  font-family: var(--font-base);
+}
+
+/* ---- ログイン画面 ---- */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 680px;
+  padding: 56px 64px;
+  background: var(--color-card-bg);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+/* 斜めの緑ストライプ(装飾) */
+.stripe {
+  position: absolute;
+  background: var(--color-green);
+  z-index: 0;
+}
+
+.stripe--top {
+  width: 320px;
+  height: 90px;
+  top: -30px;
+  left: -90px;
+  transform: rotate(-38deg);
+}
+
+.stripe--bottom-1 {
+  width: 320px;
+  height: 34px;
+  bottom: -6px;
+  right: -70px;
+  transform: rotate(-38deg);
+}
+
+.stripe--bottom-2 {
+  width: 320px;
+  height: 34px;
+  bottom: -66px;
+  right: -120px;
+  transform: rotate(-38deg);
+}
+
+.logo {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.logo-accent {
+  color: var(--color-green);
+}
+
+.logo-rest {
+  color: var(--color-text-dark);
+}
+
+.fields {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.field-label {
+  white-space: nowrap;
+}
+
+.bracket {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.field-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 2px;
+  background: var(--color-white);
+  font-size: 14px;
+}
+
+.field-input::placeholder {
+  color: #9a9a9a;
+}
+
+.login-button {
+  position: relative;
+  z-index: 1;
+  padding: 10px 40px;
+  border: none;
+  border-radius: 2px;
+  background: var(--color-white);
+  color: var(--color-text-dark);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  position: relative;
+  z-index: 1;
+  color: var(--color-error);
+  font-size: 13px;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ---- メイン画面(仮) main.html用 ---- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--color-white);
+  border-bottom: 1px solid #d4d4d8;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.user-info button {
+  padding: 6px 12px;
+  border: 1px solid #d4d4d8;
+  border-radius: 4px;
+  background: var(--color-white);
+  cursor: pointer;
+}
+
+.app-main {
+  padding: 32px;
+}
