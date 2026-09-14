@@ -1,0 +1,27 @@
+/* =====================================================================
+   config.js
+   ---------------------------------------------------------------------
+   開発・動作確認用の仮アカウント一覧。
+   実サーバーができたら、このファイルは使わず auth.js の USE_MOCK を
+   false にして本物のログインAPIを叩くようにする。
+   （このファイルは本番では絶対に公開しないこと！）
+===================================================================== */
+
+export {};
+
+export interface Account {
+  username: string;
+  password: string;
+  role?: string;
+}
+
+declare global {
+  interface Window {
+    ACCOUNTS: Account[];
+  }
+}
+
+window.ACCOUNTS = [
+  { username: "admin", password: "admin123", role: "admin" },
+  { username: "member", password: "member123", role: "member" },
+];
