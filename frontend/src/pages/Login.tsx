@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { AUTH_CONFIG, MOCK_ACCOUNTS } from '../config/auth';
-import type { AuthResult } from '../types/auth';
+import { AUTH_CONFIG, MOCK_ACCOUNTS } from '../config/Auth';
+import type { AuthResult } from '../types/Auth';
 import '../styles/login.css';
 
 export const Login: React.FC = () => {
