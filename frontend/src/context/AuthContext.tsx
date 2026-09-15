@@ -1,3 +1,13 @@
+/**
+ * @file AuthContext.tsx
+ * @description アプリケーション全体でログイン状態を管理・共有する React Context & Provider。
+ * 
+ * 概要:
+ * - セッションストレージ（`sessionStorage`）と連動し、ページリロード後もログイン状態を維持します。
+ * - `AuthProvider` でアプリを包むことで、配下のコンポーネントから `useAuth` フックを通して
+ *   ユーザー情報（`user`）やログイン/ログアウト関数にアクセスできます。
+ */
+
 import React, { createContext, useContext, useState } from 'react';
 import type { User } from '../types/Auth';
 import { AUTH_CONFIG } from '../config/Auth';

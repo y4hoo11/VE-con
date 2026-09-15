@@ -1,3 +1,14 @@
+/**
+ * @file Login.tsx
+ * @description VE-com システムのログイン画面コンポーネント。
+ * 
+ * 概要:
+ * - ユーザー名・パスワードによる認証フォームの表示と制御を行います。
+ * - `AUTH_CONFIG.useMock` のフラグ状態に応じて、開発用モックログインと
+ *   実際のバックエンドAPI (`/api/login`) への通信処理を自動切り替えします。
+ * - 認証成功時は `AuthContext` 経由でセッション状態を更新します。
+ */
+
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AUTH_CONFIG, MOCK_ACCOUNTS } from '../config/Auth';

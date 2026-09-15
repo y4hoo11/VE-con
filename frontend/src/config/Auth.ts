@@ -1,3 +1,12 @@
+/**
+ * @file Auth.ts
+ * @description 認証設定および開発用モックデータの定義ファイル。
+ * 
+ * 概要:
+ * - `AUTH_CONFIG`: セッションストレージの保存キー名やモック/本番切り替えフラグを保持。
+ * - `MOCK_ACCOUNTS`: ローカル開発時用のモックログインアカウント一覧。
+ */
+
 import type { Account } from '../types/Auth';
 
 export const AUTH_CONFIG = {
