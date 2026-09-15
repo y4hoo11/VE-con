@@ -182,3 +182,108 @@
     border-right-color: var(--border);
   }
 }
+
+/* ==========================================================================
+   抽出したナビゲーション・レイアウト用スタイル
+   ========================================================================== */
+
+/* 全体コンテナ */
+.dashboard-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* トップヘッダー */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #333;
+  color: #fff;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+/* ユーザー情報表示エリア */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+
+  .logout-button {
+    padding: 2px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+}
+
+/* メインコンテンツ表示域 */
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 下部ナビゲーションドックのラッパー */
+.bottom-nav-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* ドック開閉ボタン */
+.nav-toggle-btn {
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 4px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+}
+
+/* 開閉パネル本体 */
+.nav-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #333;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 24px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
+}
+
+/* ナビゲーション切り替えボタン */
+.nav-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: normal;
+
+  &.active {
+    font-weight: bold;
+    background-color: #1890ff;
+    color: #fff;
+  }
+}

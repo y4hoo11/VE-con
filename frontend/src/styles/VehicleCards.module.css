@@ -1,0 +1,13 @@
+.gridContainer {
+  flex: 3;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.card {
+  border: 2px solid #333;
+  background: #fff;
+  padding: 10px;
+  cursor: pointer;
+}
