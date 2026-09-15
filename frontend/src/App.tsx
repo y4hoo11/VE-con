@@ -1,6 +1,13 @@
+/**
+ * @file App.tsx
+ * @description アプリケーションのエントリーコンポーネント。
+ * 認証状態 (AuthContext) の管理と、ログイン状態に応じた画面切り替えを担当します。
+ */
+
 import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
+import { Control } from './pages/Control'; // Controlコンポーネントをインポート
 import './App.css';
 
 // ログイン後のメイン画面コンポーネント
@@ -8,7 +15,7 @@ const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header className="app-header">
         <h2>VE-com 管理システム</h2>
         <div className="user-info">
@@ -19,9 +26,9 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="app-main">
-        <h3>メイン画面（開発中）</h3>
-        <p>ログインが正常に完了しました。ここからAGVの操作画面やダッシュボードを構築していきます。</p>
+      {/* メインエリアに Control 画面を埋め込み */}
+      <main className="app-main" style={{ flex: 1, overflow: 'hidden' }}>
+        <Control />
       </main>
     </div>
   );
