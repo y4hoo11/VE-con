@@ -47,13 +47,21 @@
   color: #666;
 }
 
-.editBadge {
+/* モード表示バッジ */
+.modeBadge {
   margin-left: auto;
   font-size: 10px;
-  background: #ff4d4f;
   color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.badgeAdd {
+  background: #1890ff; /* 追加モード：青 */
+}
+
+.badgeDelete {
+  background: #ff4d4f; /* 削除モード：赤 */
 }
 
 /* 設定ポップアップ */
@@ -99,14 +107,18 @@
   padding: 4px;
 }
 
-.settingRow {
-  font-size: 12px;
+/* モード選択ラジオボタン群 */
+.radioGroup {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
 }
 
-.checkbox {
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
 }
 
@@ -128,6 +140,7 @@
   font-size: 16px;
 }
 
+/* 追加フォーム */
 .addForm {
   display: flex;
   gap: 4px;
@@ -135,7 +148,15 @@
 }
 
 .inputTask {
+  flex: 2;
+  padding: 4px;
+  font-size: 12px;
+}
+
+/* 個数入力フィールド */
+.inputQuantity {
   flex: 1;
+  width: 50px;
   padding: 4px;
   font-size: 12px;
 }
@@ -144,6 +165,10 @@
   padding: 4px 8px;
   font-size: 12px;
   cursor: pointer;
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
 }
 
 /* タスクリスト */
