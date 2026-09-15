@@ -1,52 +1,94 @@
 /**
  * @file App.tsx
  * @description アプリケーションのエントリーコンポーネント。
- * 認証状態 (AuthContext) の管理と、ログイン状態に応じた画面切り替えを担当します。
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
-import { Control } from './pages/Control'; // Controlコンポーネントをインポート
+import { Control } from './pages/Control';
+import { TaskOnly } from './pages/Task';
 import './App.css';
 
-// ログイン後のメイン画面コンポーネント
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // 下部ナビゲーションバーの開閉状態
+  const [isNavOpen, setIsNavOpen] = useState(true);
 
   return (
-    <div className="dashboard-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="dashboard-container">
+      {/* 簡易トップバー（ユーザー情報のみ） */}
       <header className="app-header">
-        <h2>VE-com 管理システム</h2>
+        <h3>VE-com 管理システム</h3>
         <div className="user-info">
-          <span>ログインユーザー: <strong>{user?.username}</strong> ({user?.role})</span>
+          <span>ログイン: <strong>{user?.username}</strong> ({user?.role})</span>
           <button type="button" onClick={logout} className="logout-button">
             ログアウト
           </button>
         </div>
       </header>
 
-      {/* メインエリアに Control 画面を埋め込み */}
-      <main className="app-main" style={{ flex: 1, overflow: 'hidden' }}>
-        <Control />
+      {/* メイン画面エリア */}
+      <main className="app-main">
+        <Routes>
+          <Route path="/control" element={<Control />} />
+          <Route path="/tasks" element={<TaskOnly />} />
+          <Route path="*" element={<Control />} />
+        </Routes>
       </main>
+
+      {/* ==================== 下部：可変ナビゲーションバー ==================== */}
+      <div className="bottom-nav-wrapper">
+        {/* 開閉トグルボタン */}
+        <button
+          type="button"
+          onClick={() => setIsNavOpen(!isNavOpen)}
+          className="nav-toggle-btn"
+        >
+          {isNavOpen ? '▼ 画面選択を閉じる' : '▲ 画面選択を開く'}
+        </button>
+
+        {/* 開閉するパネル本体 */}
+        {isNavOpen && (
+          <div className="nav-panel">
+            <button
+              type="button"
+              onClick={() => navigate('/control')}
+              className={`nav-btn ${location.pathname === '/control' ? 'active' : ''}`}
+            >
+              🎛️ コントロール画面
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/tasks')}
+              className={`nav-btn ${location.pathname === '/tasks' ? 'active' : ''}`}
+            >
+              📋 タスク表示専用
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-// ログイン状態に応じて画面を切り替える内部コンポーネント
+// ログイン状態に応じたルーティング切り替え
 const AppRoutes: React.FC = () => {
   const { user } = useAuth();
-
-  // 未ログイン時はログイン画面を表示、ログイン時はダッシュボードを表示
   return user ? <Dashboard /> : <Login />;
 };
 
-// アプリケーションルート
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

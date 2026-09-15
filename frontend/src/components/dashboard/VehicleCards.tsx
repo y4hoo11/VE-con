@@ -6,6 +6,7 @@
 
 import React from 'react';
 import type { Vehicle } from '../../types';
+import styles from '../../styles/VehicleCards.module.css';
 
 type VehicleCardsProps = {
   vehicles: Vehicle[];
@@ -13,12 +14,12 @@ type VehicleCardsProps = {
 };
 
 export const VehicleCards: React.FC<VehicleCardsProps> = ({ vehicles, onSelectVehicle }) => (
-  <div style={{ flex: 3, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+  <div className={styles.gridContainer}>
     {vehicles.map(v => (
       <div
         key={v.id}
         onClick={() => onSelectVehicle(v.id)}
-        style={{ border: '2px solid #333', background: '#fff', padding: '10px', cursor: 'pointer' }}
+        className={styles.card}
       >
         <h3>{v.id}</h3>
         <p>ステータス: {v.status}</p>

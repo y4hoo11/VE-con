@@ -5,13 +5,14 @@
  */
 
 import React from 'react';
+import styles from '../../styles/LogPanel.module.css';
 
 type LogPanelProps = {
   logs: string[];
 };
 
 export const LogPanel: React.FC<LogPanelProps> = ({ logs }) => (
-  <div style={{ flex: 1, border: '2px solid #333', background: '#fff', padding: '10px', overflowY: 'auto' }}>
+  <div className={styles.container}>
     <h4>🔔 通知・ログ (仮)</h4>
     {logs.map((log, i) => <div key={i}>{log}</div>)}
   </div>
