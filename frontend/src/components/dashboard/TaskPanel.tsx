@@ -10,7 +10,7 @@ import type { Task } from '../../types';
 type TaskPanelProps = {
   tasks: Task[];
   onAddTask: (name: string) => void;
-  onDeleteTask: (id: number) => void;
+  onDeleteTask: (id: string) => void;
 };
 
 export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDeleteTask }) => (

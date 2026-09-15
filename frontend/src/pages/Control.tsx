@@ -17,7 +17,7 @@ export const Control: React.FC = () => {
 
   // 全体で共有する状態データ
   const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, name: 'A13-2搬送 ×10', status: '進行中' },
+    { id: '1', code: 'A13-2', name: '搬送タスク', progress: 50, quantity: 10 },
   ]);
   const [vehicles] = useState<Vehicle[]>([
     { id: 'AGV-01', status: '稼働中', battery: '85%' },
@@ -31,10 +31,17 @@ export const Control: React.FC = () => {
 
   // ハンドラー関数群
   const handleAddTask = (name: string) => {
-    setTasks(prev => [...prev, { id: Date.now(), name, status: '待機中' }]);
+    setTasks(prev => [...prev, {
+      id: String(Date.now()),
+      code: 'A13-99',
+      name,
+      status: '待機中' , 
+      progress: 0,
+      quantity: 1,
+    }]);
   };
 
-  const handleDeleteTask = (id: number) => {
+  const handleDeleteTask = (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
 

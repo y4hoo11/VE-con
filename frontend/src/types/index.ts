@@ -5,11 +5,14 @@
  */
 
 // タスクの型定義
-export type Task = {
-  id: number;
-  name: string;
-  status: string;
-};
+export interface Task {
+  id: string;
+  code: string;      // 例: 'A13-2'
+  name: string;      // 例: '搬送タスク'
+  progress: number;  // 進捗率 (例: 0 ~ 100)
+  quantity: number;  // 個数 (例: 10)
+  priority?: number; // 優先度
+}
 
 // 車両の型定義
 export type Vehicle = {
