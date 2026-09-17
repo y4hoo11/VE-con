@@ -1,7 +1,6 @@
 /**
  * @file TaskPanel.tsx
  * @description タスク表示・管理パネルコンポーネント。
- * 設定（⚙️）により、アイコンバーの上下配置切り替えおよび操作モード（通常/追加/削除）の切替が可能です。
  */
 
 import React, { useState } from 'react';
@@ -14,20 +13,12 @@ type TaskPanelProps = {
   onDeleteTask: (id: string) => void;
 };
 
-// 操作モードの定義 ('normal': 閲覧のみ, 'add': 追加可能, 'delete': 削除可能)
 type PanelMode = 'normal' | 'add' | 'delete';
 
 export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDeleteTask }) => {
-  // アイコンバーの位置設定 ('top' | 'bottom')
   const [iconPosition, setIconPosition] = useState<'top' | 'bottom'>('top');
-  
-  // 操作モードの状態 ('normal': 通常, 'add': 追加モード, 'delete': 削除モード)
   const [mode, setMode] = useState<PanelMode>('normal');
-
-  // 設定メニュー（簡易モーダル/ドロップダウン風）の開閉
   const [showSettings, setShowSettings] = useState<boolean>(false);
-
-  // 新規タスク入力用
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskQuantity, setNewTaskQuantity] = useState<number>(1);
 
@@ -35,7 +26,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
     if (!newTaskName.trim()) return;
     onAddTask(newTaskName, newTaskQuantity);
     setNewTaskName('');
-    setNewTaskQuantity(1); // デフォルト値に戻す
+    setNewTaskQuantity(1);
   };
 
   return (
@@ -44,31 +35,23 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         iconPosition === 'top' ? styles.positionTop : styles.positionBottom
       }`}
     >
-      {/* ==================== アイコンバーエリア ==================== */}
       <div
         className={`${styles.iconBar} ${
-          iconPosition === 'top' ? styles.iconBarTop : styles.iconBarBottom
+          iconPosition === 'bottom' ? styles.iconBarBottom : ''
         }`}
       >
-        {/* 設定ボタン（クリックで設定パネル開閉） */}
         <button
+          type="button"
           onClick={() => setShowSettings(!showSettings)}
           title="設定"
           className={styles.iconButton}
         >
           ⚙️
         </button>
-
-        {/* メガホン */}
         <span title="アナウンス" className={styles.iconButton}>📢</span>
-
-        {/* ベル */}
         <span title="通知" className={styles.iconButton}>🔔</span>
-
-        {/* その他機能 */}
         <span className={styles.iconText}>その他</span>
 
-        {/* 現在のモードバッジ表示 */}
         {mode === 'add' && (
           <span className={`${styles.modeBadge} ${styles.badgeAdd}`}>追加モード</span>
         )}
@@ -77,7 +60,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         )}
       </div>
 
-      {/* ==================== 設定ポップアップUI ==================== */}
       {showSettings && (
         <div
           className={`${styles.settingsModal} ${
@@ -86,7 +68,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         >
           <div className={styles.settingsHeader}>⚙️ パネル設定</div>
 
-          {/* アイコン位置切り替え */}
           <div className={styles.settingGroup}>
             <label className={styles.settingLabel}>アイコン配置位置:</label>
             <select
@@ -99,7 +80,6 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
             </select>
           </div>
 
-          {/* 操作モード選択（通常 / 追加 / 削除） */}
           <div className={styles.settingGroup}>
             <label className={styles.settingLabel}>操作モード選択:</label>
             <div className={styles.radioGroup}>
@@ -138,17 +118,19 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
             </div>
           </div>
 
-          <button onClick={() => setShowSettings(false)} className={styles.closeButton}>
+          <button
+            type="button"
+            onClick={() => setShowSettings(false)}
+            className={styles.closeButton}
+          >
             閉じる
           </button>
         </div>
       )}
 
-      {/* ==================== メイン表示エリア（タスク表示） ==================== */}
       <div className={styles.mainContent}>
         <h3 className={styles.title}>タスク表示</h3>
 
-        {/* 追加モード時のみ：新規タスク追加フォーム（名前・個数）を表示 */}
         {mode === 'add' && (
           <div className={styles.addForm}>
             <input
@@ -164,17 +146,16 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
               min="1"
               placeholder="個数"
               value={newTaskQuantity}
-              onChange={(e) => setNewTaskQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => setNewTaskQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
               className={styles.inputQuantity}
             />
-            <button onClick={handleCreateTask} className={styles.addButton}>
+            <button type="button" onClick={handleCreateTask} className={styles.addButton}>
               追加
             </button>
           </div>
         )}
 
-        {/* タスク一覧 */}
         <div className={styles.taskList}>
           {tasks.map((t) => (
             <div key={t.id} className={styles.taskItem}>
@@ -183,9 +164,9 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
                 <span className={styles.quantity}>×{t.quantity}</span>
               </div>
 
-              {/* 削除モード時のみ：削除ボタンを表示 */}
               {mode === 'delete' && (
                 <button
+                  type="button"
                   onClick={() => onDeleteTask(t.id)}
                   className={styles.deleteButton}
                   title="タスクを削除"

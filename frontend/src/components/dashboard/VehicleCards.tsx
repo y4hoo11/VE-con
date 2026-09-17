@@ -1,9 +1,3 @@
-/**
- * @file VehicleCards.tsx
- * @description 稼働中の車両（AGV）一覧をカード形式でグリッド表示するコンポーネント。
- * 各カードには車両ID、ステータス、バッテリー残量を表示し、クリック時に選択ハンドラーを呼び出します。
- */
-
 import React from 'react';
 import type { Vehicle } from '../../types';
 import styles from '../../styles/VehicleCards.module.css';
@@ -11,20 +5,87 @@ import styles from '../../styles/VehicleCards.module.css';
 type VehicleCardsProps = {
   vehicles: Vehicle[];
   onSelectVehicle: (id: string) => void;
+  onAcknowledgeEmergency?: (id: string) => void;
 };
 
-export const VehicleCards: React.FC<VehicleCardsProps> = ({ vehicles, onSelectVehicle }) => (
-  <div className={styles.gridContainer}>
-    {vehicles.map(v => (
-      <div
-        key={v.id}
-        onClick={() => onSelectVehicle(v.id)}
-        className={styles.card}
-      >
-        <h3>{v.id}</h3>
-        <p>ステータス: {v.status}</p>
-        <p>バッテリー: {v.battery}</p>
-      </div>
-    ))}
-  </div>
-);
+const renderTask = (task: Vehicle['task']): string => {
+  if (task === null || task === undefined || task === '') return '未割り当て';
+  if (Array.isArray(task)) return task.length > 0 ? task.join(' / ') : '未割り当て';
+  return task;
+};
+
+const getBatteryColor = (battery: number | null): string => {
+  if (battery === null) return '#a1a1aa';
+  if (battery <= 20) return '#ff6b6b';
+  if (battery <= 40) return '#facc15';
+  return '#ffffff';
+};
+
+export const VehicleCards: React.FC<VehicleCardsProps> = ({
+  vehicles,
+  onSelectVehicle,
+  onAcknowledgeEmergency,
+}) => {
+  return (
+    <div className={styles.container}>
+      {vehicles.map((v) => {
+        const hasEmergency = !!v.emergency;
+
+        return (
+          <div key={v.id} className={styles.card}>
+            {/* 行1: 車両名+バッテリー / 異常検知 */}
+            <div className={styles.headerLeft}>
+              <span className={styles.vehicleName}>{v.name}</span>
+              <span
+                className={styles.batteryText}
+                style={{
+                  color: getBatteryColor(v.battery),
+                  fontWeight: v.battery !== null && v.battery <= 20 ? 700 : 400,
+                }}
+              >
+                バッテリー残量: {v.battery !== null ? `${v.battery}%` : '--'}
+              </span>
+            </div>
+
+            <div
+              className={`${styles.statusBadge} ${
+                hasEmergency ? styles.statusEmergency : styles.statusNormal
+              }`}
+            >
+              {hasEmergency ? '緊急事態発生' : '異常なし'}
+            </div>
+
+            {/* 行2: 詳細ボタン / 緊急詳細 */}
+            <button
+              type="button"
+              onClick={() => onSelectVehicle(v.id)}
+              className={styles.detailButton}
+            >
+              車両詳細
+              <span className={styles.detailButtonSub}>(詳細画面へ)</span>
+            </button>
+
+            <div className={styles.emergencyInfo}>
+              <div className={styles.emergencyLabel}>緊急詳細</div>
+              <div className={styles.emergencyBody}>
+                <span>{hasEmergency ? v.emergency : '〜'}</span>
+                {hasEmergency && onAcknowledgeEmergency && (
+                  <button
+                    type="button"
+                    onClick={() => onAcknowledgeEmergency(v.id)}
+                    className={styles.ackButton}
+                  >
+                    確認
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 行3: タスク */}
+            <div className={styles.taskText}>{renderTask(v.task)}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
