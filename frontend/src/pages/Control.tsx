@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import type { Task, Vehicle } from '../types';
+import type { Task, Vehicle, LogEntry } from '../types';
 import { TaskPanel } from '../components/dashboard/TaskPanel';
 import { FactoryMap } from '../components/map/FactoryMap';
 import { VehicleCards } from '../components/dashboard/VehicleCards';
@@ -19,14 +19,16 @@ export const Control: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([
     { id: '1', code: 'A13-2', name: '搬送タスク', progress: 50, quantity: 10 },
   ]);
+
   const [vehicles] = useState<Vehicle[]>([
-    { id: 'AGV-01', status: '稼働中', battery: '85%' },
-    { id: 'AGV-02', status: '充電中', battery: '42%' },
-    { id: 'AGV-03', status: 'サボりなう', battery: '99%' },
+    { id: 'AGV-01', name: '1号機', status: '稼働中', battery: 85, task: 'A13-2', emergency: null },
+    { id: 'AGV-02', name: '2号機', status: '充電中', battery: 42, task: null, emergency: null },
+    { id: 'AGV-03', name: '3号機', status: '停止中', battery: 99, task: null, emergency: '障害物検知' },
   ]);
-  const [logs] = useState<string[]>([
-    '・車両Aタスク完了',
-    '・車両B緊急停止',
+
+  const [logs] = useState<LogEntry[]>([
+    { id: 1, message: '車両Aタスク完了', level: 'info', time: '10:00' },
+    { id: 2, message: '車両B緊急停止', level: 'emergency', time: '10:05' },
   ]);
 
   // ハンドラー関数群
@@ -35,7 +37,6 @@ export const Control: React.FC = () => {
       id: String(Date.now()),
       code: 'A13-99',
       name,
-      status: '待機中' , 
       progress: 0,
       quantity: 1,
     }]);
