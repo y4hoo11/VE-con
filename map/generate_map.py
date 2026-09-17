@@ -22,4 +22,3 @@ draw.line([(120, 140), (145, 140)], fill=0, width=3) # ドア部分を開けて�
 # 画像ファイル（demo_map.pgm）として保存
 img.save("demo_map.pgm")
 print("demo_map.pgm を作成しました。")
-#unkokokokkokokiiiiiii
