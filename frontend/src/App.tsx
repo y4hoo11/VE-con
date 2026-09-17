@@ -76,7 +76,7 @@ const renderTask = (task: Vehicle['task']): string => {
 const getBatteryColor = (battery: number | null): string => {
   if (battery === null) return '#a1a1aa';
   if (battery <= 20) return '#ff6b6b';
-  if (battery <= 50) return '#facc15';
+  if (battery <= 40) return '#facc15';
   return '#ffffff';
 };
 
@@ -240,7 +240,7 @@ export default function App() {
     { id: 1, name: 'A13-2搬送 ×10', status: '進行中' },
   ]);
 
-  // ▼大國(車両情報): 新しいVehicle型に合わせてモックデータを更新
+  // ▼大國(車両情報): 新しいVehicle型に合わせて模擬データを更新
   // (setVehiclesも使えるようにして、緊急確認ボタンで状態を書き換えられるようにした)
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     { id: 'AGV-01', name: '車両1', battery: 85, task: 'A13-2搬送 ×10', emergency: null },
@@ -249,7 +249,7 @@ export default function App() {
   ]);
   // ▲
 
-  // ▼大國(通知・ログ): 新しいLogEntry型に合わせてモックデータを更新
+  // ▼大國(通知・ログ): 新しいLogEntry型に合わせて模擬データを更新
   // 車両の呼び方を車両カード側(車両1/車両2/車両3)に合わせて数字表記に統一
   const [logs] = useState<LogEntry[]>([
     { id: 1, message: '車両1タスク完了', level: 'info', time: '14:32' },
