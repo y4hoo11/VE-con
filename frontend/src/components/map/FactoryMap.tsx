@@ -2,6 +2,7 @@
  * @file FactoryMap.tsx
  * @description 工場内の2Dマップおよび稼働中の車両数・配置を表示するコンポーネント。
  * 受け取った車両データ（vehicles）をもとに、マップ上の稼働ステータスを更新します。
+ * 確認
  */
 
 import React from 'react';
