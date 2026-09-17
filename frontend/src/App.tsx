@@ -1,5 +1,5 @@
 /**
- * @file App.tsx
+ * @file App.tsx　井口飲みこい
  * @description アプリケーションのエントリーコンポーネント。
  */
 
