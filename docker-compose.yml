@@ -1,11 +1,40 @@
+version: '3.8'
+
 services:
+  # 1. PostgreSQL データベース (バックエンド用永久保存ストレージ)
+  postgres:
+    image: postgres:16-alpine
+    container_name: ve_con_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: vecon_user
+      POSTGRES_PASSWORD: vecon_password
+      POSTGRES_DB: vecon_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Mosquitto MQTTブローカー (配車サーバー・ROS2・ESP32間のデータ通信)
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: ve_con_mqtt
+    restart: always
+    ports:
+      - '1883:1883'
+      - '9001:9001'
+
+  # 3. ROS 2 開発・制御環境 (既存サービス)
   ros2_dev:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ve_con_ros2
     volumes:
-        - ./edge_ai/ros2_ws:/workspace/ros2_ws
+      - ./edge_ai/ros2_ws:/workspace/ros2_ws
     tty: true
     stdin_open: true
     network_mode: host # ROS 2トピック通信のローカル疎通を円滑化
+
+volumes:
+  pgdata:

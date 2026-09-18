@@ -1,0 +1,27 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Task {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  name      String
+  progress  Int       @default(0)
+  quantity  Int
+  priority  Int
+  createdAt DateTime  @default(now())
+  dueDate   DateTime?
+}
+
+model AGVLog {
+  id        String   @id @default(uuid())
+  agvId     String
+  level     String   // INFO, WARN, ERROR
+  message   String
+  createdAt DateTime @default(now())
+}

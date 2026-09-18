@@ -1,75 +1,71 @@
 /**
  * @file taskStorage.ts
- * @description タスクデータの永続化とコンポーネント間同期サービス
+ * @description タスクデータの永続化とコンポーネント間同期サービス (PostgreSQL / バックエンド API 連携版)
  */
 
 import type { Task } from '../types';
 
-const STORAGE_KEY = 'vecom_tasks_data';
+const API_BASE_URL = 'http://localhost:3000/api/tasks';
 const EVENT_NAME = 'vecom_tasks_updated';
 
-// 初期化用デフォルトデータ
-const DEFAULT_TASKS: Task[] = [
-  {
-    id: '1',
-    code: 'A13-2',
-    name: '搬送タスク',
-    progress: 50,
-    quantity: 10,
-    priority: 1,
-    createdAt: '2026-06-01',
-    dueDate: '2026-06-05',
-  },
-];
+/**
+ * 変更通知を発行してローカル上の他コンポーネントに最新タスク一覧を配る内部ヘルパー
+ */
+const notifyUpdates = async () => {
+  const tasks = await getStoredTasks();
+  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: tasks }));
+  return tasks;
+};
 
-// 【参照】タスク一覧取得
-export const getStoredTasks = (): Task[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TASKS));
-    return DEFAULT_TASKS;
-  }
+// 【参照】バックエンドDBからタスク一覧を取得
+export const getStoredTasks = async (): Promise<Task[]> => {
   try {
-    return JSON.parse(data);
+    const res = await fetch(API_BASE_URL);
+    if (!res.ok) throw new Error('Failed to fetch tasks from server');
+    return await res.json();
   } catch (e) {
-    console.error('Failed to parse tasks', e);
-    return DEFAULT_TASKS;
+    console.error('Failed to get tasks:', e);
+    return [];
   }
 };
 
-// 【保存（追加）】タスク追加
-export const addStoredTask = (taskData: { name: string; quantity: number; priority: number; dueDate?: string }): Task[] => {
-  const current = getStoredTasks();
-  const getTodayString = () => new Date().toISOString().split('T')[0];
+// 【保存（追加）】バックエンドDBへタスクを追加
+export const addStoredTask = async (taskData: {
+  name: string;
+  quantity: number;
+  priority: number;
+  dueDate?: string;
+}): Promise<Task[]> => {
+  try {
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(taskData),
+    });
+    if (!res.ok) throw new Error('Failed to add task');
 
-  const newTask: Task = {
-    id: String(Date.now()),
-    code: `TSK-${Math.floor(10 + Math.random() * 90)}`,
-    name: taskData.name,
-    progress: 0,
-    quantity: taskData.quantity,
-    priority: taskData.priority,
-    createdAt: getTodayString(),
-    dueDate: taskData.dueDate,
-  };
-
-  const updated = [...current, newTask];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  
-  // 他のコンポーネントへ同期通知を発行
-  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: updated }));
-  return updated;
+    // DB追加完了後、他コンポーネントへ最新一覧を通知
+    return await notifyUpdates();
+  } catch (e) {
+    console.error('Failed to add task:', e);
+    return await getStoredTasks();
+  }
 };
 
-// 【削除】タスク削除
-export const deleteStoredTask = (id: string): Task[] => {
-  const current = getStoredTasks();
-  const updated = current.filter((t) => t.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+// 【削除】バックエンドDBからタスクを削除
+export const deleteStoredTask = async (id: string): Promise<Task[]> => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete task');
 
-  // 他のコンポーネントへ同期通知を発行
-  window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: updated }));
-  return updated;
+    // DB削除完了後、他コンポーネントへ最新一覧を通知
+    return await notifyUpdates();
+  } catch (e) {
+    console.error('Failed to delete task:', e);
+    return await getStoredTasks();
+  }
 };
 
 // 【同期用フック用】変更の購読
@@ -80,15 +76,11 @@ export const subscribeTasks = (callback: (tasks: Task[]) => void) => {
   };
 
   window.addEventListener(EVENT_NAME, handler);
-  // 他のタブ/ウィンドウでの変更も検知
-  window.addEventListener('storage', (e) => {
-    if (e.key === STORAGE_KEY) {
-      callback(getStoredTasks());
-    }
-  });
+
+  // 初回ロード時に最新データをDBから取得して反映
+  getStoredTasks().then(callback);
 
   return () => {
     window.removeEventListener(EVENT_NAME, handler);
-    window.removeEventListener('storage', handler);
   };
 };
