@@ -140,11 +140,17 @@
   font-size: 16px;
 }
 
-/* 追加フォーム */
+/* 追加フォーム（複数行・またはグリッド状に配置する場合） */
 .addForm {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 12px;
+}
+
+.formRow {
+  display: flex;
+  gap: 4px;
 }
 
 .inputTask {
@@ -153,22 +159,36 @@
   font-size: 12px;
 }
 
-/* 個数入力フィールド */
 .inputQuantity {
   flex: 1;
-  width: 50px;
   padding: 4px;
   font-size: 12px;
 }
 
+.inputPriority,
+.inputDate {
+  flex: 1;
+  padding: 4px;
+  font-size: 11px;
+}
+
 .addButton {
-  padding: 4px 8px;
+  width: 100%;
+  padding: 6px;
   font-size: 12px;
   cursor: pointer;
   background-color: #1890ff;
   color: #fff;
   border: none;
   border-radius: 3px;
+}
+
+/* タスクアイテム内の期限や優先度の表示用 */
+.taskMeta {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  gap: 8px;
 }
 
 /* タスクリスト */
@@ -202,4 +222,27 @@
   cursor: pointer;
   padding: 2px 6px;
   font-size: 10px;
+}
+
+/* 個数入力と単位のグループ */
+.quantityInputGroup {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 個数入力フィールドの幅調整 */
+.inputQuantity {
+  width: 100%;
+  padding: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+/* 単位「個」のテキスト */
+.unitText {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
 }
