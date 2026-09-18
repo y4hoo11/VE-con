@@ -9,7 +9,7 @@ import styles from '../../styles/TaskPanel.module.css';
 
 type TaskPanelProps = {
   tasks: Task[];
-  onAddTask: (name: string, quantity: number) => void;
+  onAddTask: (task: { name: string; quantity: number; priority: number; dueDate?: string }) => void;
   onDeleteTask: (id: string) => void;
 };
 
@@ -19,14 +19,29 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
   const [iconPosition, setIconPosition] = useState<'top' | 'bottom'>('top');
   const [mode, setMode] = useState<PanelMode>('normal');
   const [showSettings, setShowSettings] = useState<boolean>(false);
+
+  // フォーム用ステート
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskQuantity, setNewTaskQuantity] = useState<number>(1);
+  const [newTaskPriority, setNewTaskPriority] = useState<number>(1);
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
-  const handleCreateTask = () => {
+  const handleCreateTask = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!newTaskName.trim()) return;
-    onAddTask(newTaskName, newTaskQuantity);
+
+    onAddTask({
+      name: newTaskName,
+      quantity: newTaskQuantity,
+      priority: newTaskPriority,
+      dueDate: newTaskDueDate || undefined,
+    });
+
+    // フォームのリセット
     setNewTaskName('');
     setNewTaskQuantity(1);
+    setNewTaskPriority(1);
+    setNewTaskDueDate('');
   };
 
   return (
@@ -35,9 +50,10 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         iconPosition === 'top' ? styles.positionTop : styles.positionBottom
       }`}
     >
+      {/* アイコンバー */}
       <div
         className={`${styles.iconBar} ${
-          iconPosition === 'bottom' ? styles.iconBarBottom : ''
+          iconPosition === 'bottom' ? styles.iconBarBottom : styles.iconBarTop
         }`}
       >
         <button
@@ -60,6 +76,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         )}
       </div>
 
+      {/* 設定モーダル */}
       {showSettings && (
         <div
           className={`${styles.settingsModal} ${
@@ -128,42 +145,75 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
         </div>
       )}
 
+      {/* メイン表示エリア */}
       <div className={styles.mainContent}>
-        <h3 className={styles.title}>タスク表示</h3>
+        <h3 className={styles.title}>タスク管理</h3>
 
+        {/* 追加モード時のみ表示されるフォーム */}
         {mode === 'add' && (
-          <div className={styles.addForm}>
-            <input
-              type="text"
-              placeholder="タスク名"
-              value={newTaskName}
-              onChange={(e) => setNewTaskName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
-              className={styles.inputTask}
-            />
-            <input
-              type="number"
-              min="1"
-              placeholder="個数"
-              value={newTaskQuantity}
-              onChange={(e) => setNewTaskQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
-              className={styles.inputQuantity}
-            />
-            <button type="button" onClick={handleCreateTask} className={styles.addButton}>
-              追加
+          <form onSubmit={handleCreateTask} className={styles.addForm}>
+            <div className={styles.formRow}>
+              <input
+                type="text"
+                placeholder="タスク名"
+                value={newTaskName}
+                onChange={(e) => setNewTaskName(e.target.value)}
+                className={styles.inputTask}
+              />
+              <div className={styles.quantityInputGroup}>
+                <input
+                  type="number"
+                  placeholder="個数"
+                  value={newTaskQuantity}
+                  min={1}
+                  onChange={(e) => setNewTaskQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className={styles.inputQuantity}
+                />
+                <span className={styles.unitText}>個</span>
+              </div>
+            </div>
+
+            <div className={styles.formMetaRow}>
+              <label className={styles.metaLabel}>優先度:</label>
+              <input
+                type="number"
+                value={newTaskPriority}
+                min={1}
+                max={5}
+                onChange={(e) => setNewTaskPriority(Number(e.target.value))}
+                className={styles.inputPriority}
+              />
+              <label className={styles.metaLabelRight}>期限:</label>
+              <input
+                type="date"
+                value={newTaskDueDate}
+                onChange={(e) => setNewTaskDueDate(e.target.value)}
+                className={styles.inputDate}
+              />
+            </div>
+
+            <button type="submit" className={styles.addButton}>
+              タスクを追加
             </button>
-          </div>
+          </form>
         )}
 
+        {/* タスクリスト */}
         <div className={styles.taskList}>
           {tasks.map((t) => (
             <div key={t.id} className={styles.taskItem}>
               <div>
-                <strong>{t.code}</strong> {t.name}{' '}
-                <span className={styles.quantity}>×{t.quantity}</span>
+                <div className={styles.taskTitle}>
+                  {t.name} <span className={styles.taskCode}>({t.code})</span>
+                </div>
+                <div className={styles.taskMeta}>
+                  <span>個数: {t.quantity}</span>
+                  {t.priority && <span>優先度: {t.priority}</span>}
+                  {t.dueDate && <span>期限: {t.dueDate}</span>}
+                </div>
               </div>
 
+              {/* 削除モード時のみ削除ボタンを表示 */}
               {mode === 'delete' && (
                 <button
                   type="button"

@@ -140,7 +140,7 @@
   font-size: 16px;
 }
 
-/* 追加フォーム（複数行・またはグリッド状に配置する場合） */
+/* 追加フォーム */
 .addForm {
   display: flex;
   flex-direction: column;
@@ -153,22 +153,36 @@
   gap: 4px;
 }
 
+.formMetaRow {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+  align-items: center;
+}
+
+.metaLabel {
+  font-size: 11px;
+}
+
+.metaLabelRight {
+  font-size: 11px;
+  margin-left: auto;
+}
+
 .inputTask {
   flex: 2;
   padding: 4px;
   font-size: 12px;
 }
 
-.inputQuantity {
-  flex: 1;
+.inputPriority {
+  width: 50px;
   padding: 4px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.inputPriority,
 .inputDate {
-  flex: 1;
-  padding: 4px;
+  padding: 2px;
   font-size: 11px;
 }
 
@@ -183,12 +197,25 @@
   border-radius: 3px;
 }
 
-/* タスクアイテム内の期限や優先度の表示用 */
-.taskMeta {
-  font-size: 11px;
-  color: #666;
+/* 個数入力と単位のグループ */
+.quantityInputGroup {
+  flex: 1;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
+}
+
+.inputQuantity {
+  width: 100%;
+  padding: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.unitText {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
 }
 
 /* タスクリスト */
@@ -209,9 +236,21 @@
   font-size: 13px;
 }
 
-.quantity {
+.taskTitle {
+  font-weight: bold;
+}
+
+.taskCode {
+  font-size: 10px;
   color: #888;
+}
+
+.taskMeta {
   font-size: 11px;
+  color: #666;
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .deleteButton {
@@ -222,27 +261,5 @@
   cursor: pointer;
   padding: 2px 6px;
   font-size: 10px;
-}
-
-/* 個数入力と単位のグループ */
-.quantityInputGroup {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 個数入力フィールドの幅調整 */
-.inputQuantity {
-  width: 100%;
-  padding: 4px;
-  font-size: 12px;
-  box-sizing: border-box;
-}
-
-/* 単位「個」のテキスト */
-.unitText {
-  font-size: 12px;
-  color: #333;
-  white-space: nowrap;
+  height: fit-content;
 }
