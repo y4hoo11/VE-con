@@ -3,19 +3,15 @@
  * @description タスク表示・管理パネルコンポーネント。
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Task } from '../../types';
+import { getStoredTasks, addStoredTask, deleteStoredTask, subscribeTasks } from '../../services/taskStorage.ts';
 import styles from '../../styles/TaskPanel.module.css';
-
-type TaskPanelProps = {
-  tasks: Task[];
-  onAddTask: (task: { name: string; quantity: number; priority: number; dueDate?: string }) => void;
-  onDeleteTask: (id: string) => void;
-};
 
 type PanelMode = 'normal' | 'add' | 'delete';
 
-export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDeleteTask }) => {
+export const TaskPanel: React.FC = () => {
+  const [tasks, setTasks] = useState<Task[]>(getStoredTasks);
   const [iconPosition, setIconPosition] = useState<'top' | 'bottom'>('top');
   const [mode, setMode] = useState<PanelMode>('normal');
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -26,22 +22,35 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
   const [newTaskPriority, setNewTaskPriority] = useState<number>(1);
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
 
+  // 変更のリアルタイム同期（複数パネル間・外部同期）
+  useEffect(() => {
+    const unsubscribe = subscribeTasks((updatedTasks) => {
+      setTasks(updatedTasks);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 追加処理
   const handleCreateTask = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newTaskName.trim()) return;
 
-    onAddTask({
+    addStoredTask({
       name: newTaskName,
       quantity: newTaskQuantity,
       priority: newTaskPriority,
       dueDate: newTaskDueDate || undefined,
     });
 
-    // フォームのリセット
     setNewTaskName('');
     setNewTaskQuantity(1);
     setNewTaskPriority(1);
     setNewTaskDueDate('');
+  };
+
+  // 削除処理
+  const handleDeleteTask = (id: string) => {
+    deleteStoredTask(id);
   };
 
   return (
@@ -149,7 +158,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
       <div className={styles.mainContent}>
         <h3 className={styles.title}>タスク管理</h3>
 
-        {/* 追加モード時のみ表示されるフォーム */}
+        {/* 追加モード */}
         {mode === 'add' && (
           <form onSubmit={handleCreateTask} className={styles.addForm}>
             <div className={styles.formRow}>
@@ -213,11 +222,11 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({ tasks, onAddTask, onDelete
                 </div>
               </div>
 
-              {/* 削除モード時のみ削除ボタンを表示 */}
+              {/* 削除モード */}
               {mode === 'delete' && (
                 <button
                   type="button"
-                  onClick={() => onDeleteTask(t.id)}
+                  onClick={() => handleDeleteTask(t.id)}
                   className={styles.deleteButton}
                   title="タスクを削除"
                 >
