@@ -143,8 +143,30 @@
 /* 追加フォーム */
 .addForm {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 12px;
+}
+
+.formRow {
+  display: flex;
+  gap: 4px;
+}
+
+.formMetaRow {
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+  align-items: center;
+}
+
+.metaLabel {
+  font-size: 11px;
+}
+
+.metaLabelRight {
+  font-size: 11px;
+  margin-left: auto;
 }
 
 .inputTask {
@@ -153,22 +175,47 @@
   font-size: 12px;
 }
 
-/* 個数入力フィールド */
-.inputQuantity {
-  flex: 1;
+.inputPriority {
   width: 50px;
   padding: 4px;
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.inputDate {
+  padding: 2px;
+  font-size: 11px;
 }
 
 .addButton {
-  padding: 4px 8px;
+  width: 100%;
+  padding: 6px;
   font-size: 12px;
   cursor: pointer;
   background-color: #1890ff;
   color: #fff;
   border: none;
   border-radius: 3px;
+}
+
+/* 個数入力と単位のグループ */
+.quantityInputGroup {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inputQuantity {
+  width: 100%;
+  padding: 4px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.unitText {
+  font-size: 12px;
+  color: #333;
+  white-space: nowrap;
 }
 
 /* タスクリスト */
@@ -189,9 +236,21 @@
   font-size: 13px;
 }
 
-.quantity {
+.taskTitle {
+  font-weight: bold;
+}
+
+.taskCode {
+  font-size: 10px;
   color: #888;
+}
+
+.taskMeta {
   font-size: 11px;
+  color: #666;
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .deleteButton {
@@ -202,4 +261,5 @@
   cursor: pointer;
   padding: 2px 6px;
   font-size: 10px;
+  height: fit-content;
 }
