@@ -1,44 +1,57 @@
+// taskController.ts
 import { Request, Response } from 'express';
 import { prisma } from '../config/database';
+import { dispatchService } from '../services/dispatchService';
 
-// 【参照】一覧取得
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const tasks = await prisma.task.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        assignedVehicle: true,
+        createdByUser: {
+          select: { id: true, username: true, email: true },
+        },
+      },
     });
     res.json(tasks);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch tasks' });
+    res.status(500).json({ error: 'タスク一覧の取得に失敗しました' });
   }
 };
 
-// 【保存】タスク作成
 export const createTask = async (req: Request, res: Response) => {
-  const { name, quantity, priority, dueDate } = req.body;
   try {
+    const { title, name, startLocation, targetLocation, priority, createdByUserId } = req.body;
+
+    const taskTitle = title || name;
+
+    if (!taskTitle) {
+      return res.status(400).json({ error: 'タスクタイトル (title) は必須です' });
+    }
+
     const newTask = await prisma.task.create({
       data: {
-        code: `TSK-${Math.floor(10 + Math.random() * 90)}`,
-        name,
-        quantity: Number(quantity),
-        priority: Number(priority),
-        dueDate: dueDate ? new Date(dueDate) : null,
+        title: taskTitle, // ⭕ name ではなく title に設定
+        startLocation,
+        targetLocation,
+        priority: priority ?? 3,
+        createdByUserId: createdByUserId || (req as any).user?.id || null,
       },
     });
     res.status(201).json(newTask);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create task' });
+    console.error(error);
+    res.status(500).json({ error: 'タスクの作成に失敗しました' });
   }
 };
 
-// 【削除】タスク削除
-export const deleteTask = async (req: Request, res: Response) => {
-  const id = req.params.id as string; // ★ string型へ明示的にキャスト
+export const assignTask = async (req: Request, res: Response) => {
   try {
-    await prisma.task.delete({ where: { id } });
-    res.status(204).send();
+    const { taskId, vehicleId } = req.body;
+    const updatedTask = await dispatchService.assignTask(taskId, vehicleId);
+    res.json(updatedTask);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete task' });
+    res.status(500).json({ error: '配車処理に失敗しました' });
   }
 };

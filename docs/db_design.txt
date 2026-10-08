@@ -1,0 +1,98 @@
+================================================================================
+VE-con システム データベース設計書 (仮・未推敲)
+
+[概要]
+本ドキュメントは AGV/搬送ロボット運行管理システム (VE-con) の
+データベース設計（テーブル定義詳細）を記述したものです。
+
+users (ユーザー・権限管理)
+
+[概要] システム利用者情報およびアクセス権限を管理する。
+
+No | カラム名         | データ型     | PK/FK | Null | 初期値            | 説明
+----+------------------+--------------+-------+------+-------------------+-----------------------------
+ 1 | id               | VARCHAR(36)  | PK    | NO   | (UUID)            | ユーザーID
+ 2 | username         | VARCHAR(50)  | UNIQUE| NO   | -                 | ログインユーザー名
+ 3 | email            | VARCHAR(255) | UNIQUE| NO   | -                 | メールアドレス
+ 4 | password_hash    | VARCHAR(255) | -     | NO   | -                 | ハッシュ化パスワード (bcrypt等)
+ 5 | role             | VARCHAR(20)  | -     | NO   | 'OPERATOR'        | 権限 (ADMIN | OPERATOR | VIEWER)
+ 6 | created_at       | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 作成日時
+ 7 | updated_at       | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 更新日時
+
+vehicles (車両・AGV状態管理)
+
+[概要] 各AGVの現在状態、バッテリー残量、リアルタイム位置情報を管理する。
+
+No | カラム名         | データ型     | PK/FK | Null | 初期値            | 説明
+----+------------------+--------------+-------+------+-------------------+-----------------------------
+ 1 | id               | VARCHAR(50)  | PK    | NO   | -                 | 車両識別ID (例: agv-01)
+ 2 | name             | VARCHAR(100) | -     | NO   | -                 | 車両表示名 (例: 搬送機1号)
+ 3 | status           | VARCHAR(20)  | -     | NO   | 'OFFLINE'         | 状態 (IDLE|RUNNING|CHARGING|ERROR|OFFLINE)
+ 4 | battery_level    | INT          | -     | NO   | 0                 | バッテリー残量 (0-100%)
+ 5 | current_x        | FLOAT        | -     | YES  | NULL              | マップ上の現在X座標 (m)
+ 6 | current_y        | FLOAT        | -     | YES  | NULL              | マップ上の現在Y座標 (m)
+ 7 | current_theta    | FLOAT        | -     | YES  | NULL              | 車両の向き・角度 (rad/deg)
+ 8 | current_map_id   | VARCHAR(50)  | -     | YES  | NULL              | 走行中のマップID (floor1_map等)
+ 9 | last_heartbeat   | TIMESTAMP    | -     | YES  | NULL              | 最終生存確認時刻 (MQTT通信監視用)
+10 | created_at       | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 登録日時
+11 | updated_at       | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 更新日時
+
+tasks (搬送タスク管理)
+
+[概要] 発行された搬送指示および配車割り当て状況を管理する。
+
+No | カラム名            | データ型     | PK/FK | Null | 初期値             | 説明
+----+--------------------+--------------+-------+------+-------------------+-----------------------------
+ 1 | id                 | VARCHAR(36)  | PK    | NO   | (UUID)            | タスクID
+ 2 | title              | VARCHAR(100) | -     | NO   | -                 | タスク名 (例: A棚からBラインへの搬送)
+ 3 | status             | VARCHAR(20)  | -     | NO   | 'PENDING'         | 状態 (PENDING|ASSIGNED|IN_PROGRESS|COMPLETED|CANCELLED|FAILED)
+ 4 | priority           | INT          | -     | NO   | 3                 | 優先度 (1: 低 ? 5: 高)
+ 5 | assigned_vehicle_id| VARCHAR(50)  | FK    | YES  | NULL              | 割り当て車両ID (-> vehicles.id)
+ 6 | start_location     | VARCHAR(100) | -     | NO   | -                 | 出発地 (ウェイポイント名または座標)
+ 7 | target_location    | VARCHAR(100) | -     | NO   | -                 | 目的地 (ウェイポイント名または座標)
+ 8 | created_by_user_id | VARCHAR(36)  | FK    | YES  | NULL              | タスク作成者ID (-> users.id)
+ 9 | scheduled_at       | TIMESTAMP    | -     | YES  | NULL              | 実行予定日時
+10 | started_at         | TIMESTAMP    | -     | YES  | NULL              | 実開始日時
+11 | completed_at       | TIMESTAMP    | -     | YES  | NULL              | 完了日時
+12 | created_at         | TIMESTAMP    | NO    | CURRENT_TIMESTAMP | 作成日時
+13 | updated_at         | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 更新日時
+
+vehicle_logs (通知・ログ履歴)
+
+[概要] 車両から送信されたエラー、イベント、警告ログを記録する。
+
+No | カラム名          | データ型     | PK/FK | Null | 初期値             | 説明
+----+------------------+--------------+-------+------+-------------------+-----------------------------
+ 1 | id               | BIGINT       | PK    | NO   | (AUTO_INCREMENT)  | ログID
+ 2 | vehicle_id       | VARCHAR(50)  | FK    | NO   | -                 | 対象車両ID (-> vehicles.id)
+ 3 | log_level        | VARCHAR(10)  | -     | NO   | 'INFO'            | ログレベル (INFO | WARN | ERROR)
+ 4 | message          | TEXT         | -     | NO   | -                 | ログメッセージ (例: Obstacle detected)
+ 5 | details          | JSON         | -     | YES  | NULL              | 詳細データ (センサー生データ、エラーコード等)
+ 6 | timestamp        | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 発生日時
+
+task_histories (タスク進捗履歴)
+
+[概要] タスクのステータス変更履歴および変更理由を記録する。
+
+No | カラム名         | データ型     | PK/FK | Null | 初期値            | 説明
+----+------------------+--------------+-------+------+-------------------+-----------------------------
+1 | id               | BIGINT       | PK    | NO   | (AUTO_INCREMENT)  | 履歴ID
+2 | task_id          | VARCHAR(36)  | FK    | NO   | -                 | 対象タスクID (-> tasks.id)
+3 | status           | VARCHAR(20)  | -     | NO   | -                 | 変更後のステータス
+4 | note             | TEXT         | -     | YES  | NULL              | 備考 (キャンセル理由やエラー詳細)
+5 | timestamp        | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 変更日時
+
+system_settings (システム・AGV共通設定)
+
+[概要] システム全体のパラメータ設定（MQTT設定、速度制限など）を保持する。
+
+No | カラム名           | データ型     | PK/FK | Null | 初期値            | 説明
+----+--------------------+--------------+-------+------+-------------------+-----------------------------
+1 | key                | VARCHAR(100) | PK    | NO   | -                 | 設定キー (例: mqtt.broker_url)
+2 | value              | TEXT         | -     | NO   | -                 | 設定値 (文字列、数値、JSON)
+3 | category           | VARCHAR(30)  | -     | NO   | -                 | カテゴリ (GENERAL | AGV | SYSTEM)
+4 | description        | VARCHAR(255) | -     | YES  | NULL              | 設定項目の説明文
+5 | updated_by_user_id | VARCHAR(36)  | FK    | YES  | NULL              | 最終更新ユーザーID (-> users.id)
+6 | updated_at         | TIMESTAMP    | -     | NO   | CURRENT_TIMESTAMP | 更新日時
+
+================================================================================

@@ -1,29 +1,50 @@
 // src/types/index.ts
 
 // タスクの型定義
-export interface Task {
+import {
+  Task,
+  Vehicle,
+  VehicleLog,
+  TaskHistory,
+  SystemSetting,
+  TaskStatus,
+  VehicleStatus,
+  LogLevel,
+  SettingCategory,
+} from '@prisma/client';
+
+// Prisma生成型の再エクスポート
+export {
+  Task,
+  Vehicle,
+  VehicleLog,
+  TaskHistory,
+  SystemSetting,
+  TaskStatus,
+  VehicleStatus,
+  LogLevel,
+  SettingCategory,
+};
+
+// フロントエンドとのリアルタイム更新用ペイロード型定義
+export interface VehicleUpdatePayload {
   id: string;
-  code: string;       // 例: 'TASK-01'
-  name: string;       // 例: '搬送タスク'
-  progress: number;   // 進捗率 (0 ~ 100)
-  quantity: number;   // 個数
-  priority?: number;  // 優先度
+  name?: string;
+  status?: VehicleStatus;
+  batteryLevel?: number | null;
+  currentX?: number | null;
+  currentY?: number | null;
+  currentTheta?: number | null;
+  currentMapId?: string | null;
+  emergencyReason?: string | null;
 }
 
-// 車両（AGV）の型定義
-export interface Vehicle {
+// ログ出力用ペイロード型定義
+export interface LogPayload {
   id: string;
-  name: string;                   // 車両名
-  status?: string;                // 状態
-  battery: number | null;         // バッテリー残量
-  task: string | string[] | null; // しているタスク
-  emergency: string | null;       // 緊急通知
-}
-
-// 通知・ログの型定義
-export interface LogEntry {
-  id: number;
+  vehicleId?: string;
+  level: LogLevel;
   message: string;
-  level: 'info' | 'emergency';
-  time: string;
+  details?: Record<string, unknown>;
+  timestamp: string;
 }

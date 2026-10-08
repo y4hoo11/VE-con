@@ -1,7 +1,10 @@
 // src/services/socketService.ts
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { Vehicle, LogEntry } from '../types';
+import { VehicleUpdatePayload, LogPayload } from '../types';
+import { mqttService } from './mqttService';
+import { prisma } from '../config/database';
+import { VehicleStatus } from '@prisma/client';
 
 class SocketService {
   private io: Server | null = null;
@@ -12,40 +15,45 @@ class SocketService {
     });
 
     this.io.on('connection', (socket: Socket) => {
-      console.log(` [WebSocket] フロントエンド接続: ${socket.id}`);
+      console.log(`[WebSocket] フロントエンド接続: ${socket.id}`);
 
-      // フロントからの緊急停止指示
+      // Web画面からの手動緊急停止指示
       socket.on('manual_emergency_stop', (data: { vehicleId: string }) => {
-        console.warn(` [緊急] Webからの停止命令を受信: ${data.vehicleId}`);
-        // mqttService.sendEmergencyStop(data.vehicleId) などを呼び出す
+        console.warn(`[緊急] Webからの停止命令を受信: ${data.vehicleId}`);
+        mqttService.sendEmergencyStop(data.vehicleId);
       });
 
-      // フロントの「確認」ボタン等による緊急解除
-      socket.on('acknowledge_emergency', (data: { vehicleId: string }) => {
+      // Web画面の「確認」ボタン等による緊急状態の解除
+      socket.on('acknowledge_emergency', async (data: { vehicleId: string }) => {
+        await prisma.vehicle.update({
+          where: { id: data.vehicleId },
+          data: { status: VehicleStatus.IDLE },
+        });
+
         this.broadcastVehicleUpdate({
           id: data.vehicleId,
-          emergency: null,
+          status: VehicleStatus.IDLE,
+          emergencyReason: null,
         });
       });
 
       socket.on('disconnect', () => {
-        console.log(` [WebSocket] クライアント切断: ${socket.id}`);
+        console.log(`[WebSocket] クライアント切断: ${socket.id}`);
       });
     });
   }
 
   // 車両情報の更新をフロントエンドへブロードキャスト
-  // ※部分更新できるように Partial<Vehicle> & { id: string } を採用
-  broadcastVehicleUpdate(vehicleUpdate: Partial<Vehicle> & { id: string }) {
+  broadcastVehicleUpdate(vehicleUpdate: VehicleUpdatePayload) {
     if (this.io) {
       this.io.emit('vehicle:update', vehicleUpdate);
     }
   }
 
   // 通知・ログをフロントエンドへブロードキャスト
-  broadcastLog(logEntry: LogEntry) {
+  broadcastLog(logPayload: LogPayload) {
     if (this.io) {
-      this.io.emit('log:new', logEntry);
+      this.io.emit('log:new', logPayload);
     }
   }
 }

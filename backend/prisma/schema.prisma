@@ -1,3 +1,4 @@
+// schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -7,21 +8,135 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Task {
-  id        String    @id @default(uuid())
-  code      String    @unique
-  name      String
-  progress  Int       @default(0)
-  quantity  Int
-  priority  Int
-  createdAt DateTime  @default(now())
-  dueDate   DateTime?
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
 }
 
-model AGVLog {
-  id        String   @id @default(uuid())
-  agvId     String
-  level     String   // INFO, WARN, ERROR
+// 車両のステータス定義
+enum VehicleStatus {
+  IDLE
+  RUNNING
+  CHARGING
+  ERROR
+  OFFLINE
+}
+
+enum TaskStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+// ログレベル定義
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+enum SettingCategory {
+  GENERAL
+  AGV
+  SYSTEM
+}
+
+model User {
+  id           String           @id @default(uuid())
+  username     String
+  email        String           @unique
+  passwordHash String           @map("password_hash")
+  role         Role             @default(OPERATOR)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  createdTasks   Task[]           @relation("UserCreatedTasks")
+  systemSettings SystemSetting[]  @relation("UserUpdatedSettings")
+
+  @@map("users")
+}
+
+// 車両 (AGV) モデル
+model Vehicle {
+  id            String        @id // 例: AGV-01
+  name          String
+  status        VehicleStatus @default(IDLE)
+  batteryLevel  Int           @default(100) @map("battery_level")
+  currentX      Float         @default(0.0) @map("current_x")
+  currentY      Float         @default(0.0) @map("current_y")
+  currentTheta  Float?        @map("current_theta")
+  currentMapId  String?       @map("current_map_id")
+  lastHeartbeat DateTime?     @map("last_heartbeat")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  tasks Task[]
+  logs  VehicleLog[]
+
+  @@map("vehicles")
+}
+
+// タスクモデル
+model Task {
+  id                String     @id @default(uuid())
+  title             String
+  status            TaskStatus @default(PENDING)
+  priority          Int        @default(3) // 1: Low ~ 5: High
+  assignedVehicleId String?    @map("assigned_vehicle_id")
+  startLocation     String?    @map("start_location")
+  targetLocation    String?    @map("target_location")
+  createdByUserId   String?    @map("created_by_user_id")
+  scheduledAt       DateTime?  @map("scheduled_at")
+  startedAt         DateTime?  @map("started_at")
+  completedAt       DateTime?  @map("completed_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  assignedVehicle Vehicle?      @relation(fields: [assignedVehicleId], references: [id], onDelete: SetNull)
+  createdByUser   User?         @relation("UserCreatedTasks", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  histories       TaskHistory[]
+
+  @@map("tasks")
+}
+
+model VehicleLog {
+  id        BigInt   @id @default(autoincrement())
+  vehicleId String   @map("vehicle_id")
+  logLevel  LogLevel @map("log_level")
   message   String
-  createdAt DateTime @default(now())
+  details   Json?
+  timestamp DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_logs")
+}
+
+model TaskHistory {
+  id        BigInt     @id @default(autoincrement())
+  taskId    String     @map("task_id")
+  status    TaskStatus
+  note      String?
+  timestamp DateTime   @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_histories")
+}
+
+model SystemSetting {
+  key             String          @id // 例: mqtt.broker_url
+  value           String
+  category        SettingCategory @default(GENERAL)
+  description     String?
+  updatedByUserId String?         @map("updated_by_user_id")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  updatedByUser User? @relation("UserUpdatedSettings", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("system_settings")
 }
