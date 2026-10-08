@@ -14,22 +14,18 @@ export const getVehicles = async (req: Request, res: Response) => {
 };
 
 export const getVehicleById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const vehicleId = Array.isArray(id) ? id[0] : id;
+
+  if (!vehicleId) {
+    return res.status(400).json({ error: '無効な車両IDです' });
+  }
+
   try {
-    const { id } = req.params;
-    
-    // 1. id が string であることを明確化（配列や未定義をガード）
-    const vehicleId = Array.isArray(id) ? id[0] : id;
-
-    if (!vehicleId) {
-      return res.status(400).json({ error: '無効な車両IDです' });
-    }
-
     const vehicle = await prisma.vehicle.findUnique({
       where: { id: vehicleId },
-      // 2. tasks への参照を一時的に除外（または schema.prisma への定義追加後に include 復活）
       include: {
-        logs: { take: 10, orderBy: { timestamp: 'desc' } },
-        tasks: { take: 10, orderBy: { createdAt: 'desc' } }, // tasks リレーションを復活
+        tasks: { take: 10, orderBy: { createdAt: 'desc' } },
       },
     });
 
@@ -37,8 +33,24 @@ export const getVehicleById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: '車両が見つかりません' });
     }
 
-    res.json(vehicle);
+    const safeVehicle = JSON.parse(
+      JSON.stringify(vehicle, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      )
+    );
+
+    res.json(safeVehicle);
   } catch (error) {
-    res.status(500).json({ error: '車両詳細の取得に失敗しました' });
+    try {
+      // 修正箇所: req.params.id ではなく型安全な vehicleId を使用
+      const fallbackVehicle = await prisma.vehicle.findUnique({
+        where: { id: vehicleId },
+      });
+      if (!fallbackVehicle) return res.status(404).json({ error: '車両が見つかりません' });
+      return res.json(fallbackVehicle);
+    } catch (fallbackError) {
+      console.error('getVehicleById エラー:', error);
+      return res.status(500).json({ error: '車両詳細の取得に失敗しました' });
+    }
   }
 };
