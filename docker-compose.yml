@@ -1,11 +1,40 @@
 services:
+  # 1. データベース (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: ve_con_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: agv_admin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: agv_warehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. MQTTブローカー (Mosquitto)
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: ve_con_mosquitto
+    restart: always
+    ports:
+      - "1883:1883"   # MQTT標準ポート
+      - "9001:9001"   # WebSocket用ポート (必要な場合)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  # 3. 既存の ROS 2 開発環境
   ros2_dev:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ve_con_ros2
     volumes:
-        - ./edge_ai/ros2_ws:/workspace/ros2_ws
+      - ./edge-ai/ros2_ws:/workspace/ros2_ws
     tty: true
     stdin_open: true
     network_mode: host # ROS 2トピック通信のローカル疎通を円滑化
+
+volumes:
+  postgres_data:

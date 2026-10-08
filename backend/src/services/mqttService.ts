@@ -1,7 +1,8 @@
 // src/services/mqttService.ts
 import { mqttClient } from '../config/mqtt';
 import { socketService } from './socketService';
-import { LogEntry } from '../types';
+import { prisma } from '../config/database';
+import { VehicleStatus, LogLevel } from '@prisma/client';
 
 class MqttService {
   init() {
@@ -12,43 +13,83 @@ class MqttService {
       }
     });
 
-    mqttClient.on('message', (topic, payload) => {
+    mqttClient.on('message', async (topic, payload) => {
       try {
         const message = JSON.parse(payload.toString());
         const topicParts = topic.split('/');
         const agvId = topicParts[1]; // 例: "agv/AGV-01/telemetry" -> "AGV-01"
 
         if (topic.endsWith('/telemetry')) {
-          // テレメトリ（バッテリー残量・状態・タスク等）の更新
-          socketService.broadcastVehicleUpdate({
-            id: agvId,
-            battery: typeof message.battery === 'number' ? message.battery : null,
-            status: message.status,
-            task: message.task,
+          // 1. テレメトリ受信: DBのVehicle状態を更新 (upsert)
+          const updatedVehicle = await prisma.vehicle.upsert({
+            where: { id: agvId },
+            update: {
+              batteryLevel: typeof message.battery === 'number' ? message.battery : undefined,
+              status: message.status ? (message.status as VehicleStatus) : undefined,
+              currentX: typeof message.x === 'number' ? message.x : undefined,
+              currentY: typeof message.y === 'number' ? message.y : undefined,
+              currentTheta: typeof message.theta === 'number' ? message.theta : undefined,
+              lastHeartbeat: new Date(),
+            },
+            create: {
+              id: agvId,
+              name: message.name || agvId,
+              batteryLevel: typeof message.battery === 'number' ? message.battery : 0,
+              status: (message.status as VehicleStatus) || VehicleStatus.IDLE,
+              currentX: message.x || 0,
+              currentY: message.y || 0,
+              lastHeartbeat: new Date(),
+            },
           });
+
+          // 2. フロントエンドへ最新車両状態をブロードキャスト
+          socketService.broadcastVehicleUpdate({
+            id: updatedVehicle.id,
+            status: updatedVehicle.status,
+            batteryLevel: updatedVehicle.batteryLevel,
+            currentX: updatedVehicle.currentX,
+            currentY: updatedVehicle.currentY,
+            currentTheta: updatedVehicle.currentTheta,
+          });
+
         } else if (topic.endsWith('/emergency')) {
-          // 実機側マイコン・LiDARからの緊急信号を受信
           const reason = message.reason || '障害物接近による緊急制動';
           console.error(`[MQTT緊急検知] ${agvId}: ${reason}`);
 
-          // 車両カードの emergency プロパティを更新
-          socketService.broadcastVehicleUpdate({
-            id: agvId,
-            status: '緊急停止中',
-            emergency: reason,
+          // 1. 車両ステータスを ERROR に更新
+          await prisma.vehicle.update({
+            where: { id: agvId },
+            data: { status: VehicleStatus.ERROR },
           });
 
-          // ログパネル用の LogEntry を発行
-          const log: LogEntry = {
-            id: Date.now(),
+          // 2. 緊急ログを vehicle_logs テーブルに書き込み
+          const createdLog = await prisma.vehicleLog.create({
+            data: {
+              vehicleId: agvId,
+              logLevel: LogLevel.ERROR,
+              message: `緊急停止: ${reason}`,
+              details: message,
+            },
+          });
+
+          // 3. フロントへ緊急状態とログを通知
+          socketService.broadcastVehicleUpdate({
+            id: agvId,
+            status: VehicleStatus.ERROR,
+            emergencyReason: reason,
+          });
+
+          socketService.broadcastLog({
+            id: createdLog.id.toString(),
+            vehicleId: agvId,
+            level: LogLevel.ERROR,
             message: `${agvId} 緊急停止: ${reason}`,
-            level: 'emergency',
-            time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-          };
-          socketService.broadcastLog(log);
+            details: message,
+            timestamp: createdLog.timestamp.toISOString(),
+          });
         }
       } catch (e) {
-        console.error('MQTTメッセージのパースエラー:', e);
+        console.error('MQTTメッセージの処理エラー:', e);
       }
     });
   }
@@ -60,7 +101,7 @@ class MqttService {
     console.log(`[MQTT送信] ${topic}:`, command);
   }
 
-  // 実機へ個別緊急停止
+  // 実機へ緊急停止コマンド発行
   sendEmergencyStop(agvId: string) {
     const topic = `agv/${agvId}/command`;
     mqttClient.publish(topic, JSON.stringify({ action: 'EMERGENCY_STOP' }));

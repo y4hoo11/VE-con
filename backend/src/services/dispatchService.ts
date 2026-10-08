@@ -1,38 +1,74 @@
 // src/services/dispatchService.ts
-import { Task, LogEntry } from '../types';
 import { mqttService } from './mqttService';
 import { socketService } from './socketService';
+import { prisma } from '../config/database';
+import { TaskStatus, VehicleStatus, LogLevel } from '@prisma/client';
 
 class DispatchService {
-  // Task型のタスクを車両に割り当てる
-  assignTask(task: Task, vehicleId: string) {
-    console.log(`タスク [${task.code}: ${task.name}] を ${vehicleId} に配車します`);
+  /**
+   * 指定したタスクを車両に割り当てて配車指示を出す
+   */
+  async assignTask(taskId: string, vehicleId: string) {
+    // 1. DB上のタスク情報および車両情報の更新（トランザクション処理）
+    const [updatedTask, updatedVehicle] = await prisma.$transaction([
+      prisma.task.update({
+        where: { id: taskId },
+        data: {
+          assignedVehicleId: vehicleId,
+          status: TaskStatus.ASSIGNED,
+        },
+      }),
+      prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: {
+          status: VehicleStatus.RUNNING,
+        },
+      }),
+      prisma.taskHistory.create({
+        data: {
+          taskId: taskId,
+          status: TaskStatus.ASSIGNED,
+          note: `車両 [${vehicleId}] にタスクが配車されました`,
+        },
+      }),
+    ]);
 
-    // 1. 実機（Jetson/Pi）に向けてMQTTで走行タスクを指示
+    console.log(`タスク [${updatedTask.title}] を ${vehicleId} に配車しました`);
+
+    // 2. 実機（Jetson/Pi）に向けてMQTT指示を送信
     mqttService.sendVehicleCommand(vehicleId, {
       type: 'TASK_ASSIGN',
-      taskId: task.id,
-      taskCode: task.code,
-      taskName: task.name,
-      quantity: task.quantity,
+      taskId: updatedTask.id,
+      taskTitle: updatedTask.title,
+      startLocation: updatedTask.startLocation,
+      targetLocation: updatedTask.targetLocation,
     });
 
-    // 2. 車両カードの状態を更新（タスク名をセットし、緊急状態を解除）
+    // 3. フロントエンドへ状態変化をブロードキャスト
     socketService.broadcastVehicleUpdate({
       id: vehicleId,
-      status: 'タスク実行中',
-      task: task.name,
-      emergency: null,
+      status: VehicleStatus.RUNNING,
+      emergencyReason: null,
     });
 
-    // 3. 正常ログ（LogEntry）を発行
-    const log: LogEntry = {
-      id: Date.now(),
-      message: `${vehicleId} に [${task.code}] ${task.name} (数量: ${task.quantity}) を割り当てました`,
-      level: 'info',
-      time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-    };
-    socketService.broadcastLog(log);
+    // 4. DBへログ書き込み & フロントへ新着ログ配信
+    const createdLog = await prisma.vehicleLog.create({
+      data: {
+        vehicleId: vehicleId,
+        logLevel: LogLevel.INFO,
+        message: `${vehicleId} にタスク [${updatedTask.title}] を割り当てました`,
+      },
+    });
+
+    socketService.broadcastLog({
+      id: createdLog.id.toString(),
+      vehicleId: vehicleId,
+      level: LogLevel.INFO,
+      message: createdLog.message,
+      timestamp: createdLog.timestamp.toISOString(),
+    });
+
+    return updatedTask;
   }
 }
 
