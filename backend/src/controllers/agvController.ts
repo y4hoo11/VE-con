@@ -29,6 +29,7 @@ export const getVehicleById = async (req: Request, res: Response) => {
       // 2. tasks への参照を一時的に除外（または schema.prisma への定義追加後に include 復活）
       include: {
         logs: { take: 10, orderBy: { timestamp: 'desc' } },
+        tasks: { take: 10, orderBy: { createdAt: 'desc' } }, // tasks リレーションを復活
       },
     });
 

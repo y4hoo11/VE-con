@@ -1,4 +1,3 @@
-// src/services/dispatchService.ts
 import { mqttService } from './mqttService';
 import { socketService } from './socketService';
 import { prisma } from '../config/database';
@@ -21,7 +20,7 @@ class DispatchService {
       prisma.vehicle.update({
         where: { id: vehicleId },
         data: {
-          status: VehicleStatus.MOVING, // RUNNING -> MOVING に修正
+          status: VehicleStatus.RUNNING,
         },
       }),
       prisma.taskHistory.create({
@@ -33,13 +32,13 @@ class DispatchService {
       }),
     ]);
 
-    console.log(`タスク [${updatedTask.name}] を ${vehicleId} に配車しました`); // title -> name に修正
+    console.log(`タスク [${updatedTask.title}] を ${vehicleId} に配車しました`);
 
     // 2. 実機（Jetson/Pi）に向けてMQTT指示を送信
     mqttService.sendVehicleCommand(vehicleId, {
       type: 'TASK_ASSIGN',
       taskId: updatedTask.id,
-      taskTitle: updatedTask.name, // title -> name に修正（必要に応じてプロパティ名も調整）
+      taskTitle: updatedTask.title,
       startLocation: updatedTask.startLocation,
       targetLocation: updatedTask.targetLocation,
     });
@@ -47,7 +46,7 @@ class DispatchService {
     // 3. フロントエンドへ状態変化をブロードキャスト
     socketService.broadcastVehicleUpdate({
       id: vehicleId,
-      status: VehicleStatus.MOVING, // RUNNING -> MOVING に修正
+      status: VehicleStatus.RUNNING,
       emergencyReason: null,
     });
 
@@ -56,7 +55,7 @@ class DispatchService {
       data: {
         vehicleId: vehicleId,
         logLevel: LogLevel.INFO,
-        message: `${vehicleId} にタスク [${updatedTask.name}] を割り当てました`, // title -> name に修正
+        message: `${vehicleId} にタスク [${updatedTask.title}] を割り当てました`,
       },
     });
 

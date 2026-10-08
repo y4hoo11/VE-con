@@ -3,12 +3,16 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/database';
 import { dispatchService } from '../services/dispatchService';
 
-// 【参照】一覧取得
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const tasks = await prisma.task.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { assignedVehicle: true }, // ← エラーにならず正常に車両情報を取得できます
+      include: {
+        assignedVehicle: true,
+        createdByUser: {
+          select: { id: true, username: true, email: true },
+        },
+      },
     });
     res.json(tasks);
   } catch (error) {
@@ -16,20 +20,28 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
-// 【保存】タスク作成
 export const createTask = async (req: Request, res: Response) => {
   try {
-    const { title, name, startLocation, targetLocation, priority } = req.body;
+    const { title, name, startLocation, targetLocation, priority, createdByUserId } = req.body;
+
+    const taskTitle = title || name;
+
+    if (!taskTitle) {
+      return res.status(400).json({ error: 'タスクタイトル (title) は必須です' });
+    }
+
     const newTask = await prisma.task.create({
       data: {
-        name: name || title || '名称未設定タスク',
+        title: taskTitle, // ⭕ name ではなく title に設定
         startLocation,
         targetLocation,
         priority: priority ?? 3,
+        createdByUserId: createdByUserId || (req as any).user?.id || null,
       },
     });
     res.status(201).json(newTask);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'タスクの作成に失敗しました' });
   }
 };

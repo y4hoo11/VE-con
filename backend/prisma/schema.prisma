@@ -8,13 +8,28 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
 // 車両のステータス定義
 enum VehicleStatus {
   IDLE
-  MOVING
+  RUNNING
   CHARGING
   ERROR
-  MAINTENANCE
+  OFFLINE
+}
+
+enum TaskStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  FAILED
 }
 
 // ログレベル定義
@@ -24,92 +39,104 @@ enum LogLevel {
   ERROR
 }
 
-// タスクモデル
-model Task {
-  id                String    @id @default(uuid())
-  code              String    @unique @default(uuid())
-  name              String
-  progress          Int       @default(0)
-  quantity          Int       @default(1)
-  priority          Int       @default(3)
-  startLocation     String?
-  targetLocation    String?
-  
-  // 車両（AGV）とのリレーション
-  assignedVehicleId String?
-  assignedVehicle   Vehicle?  @relation(fields: [assignedVehicleId], references: [id], onDelete: SetNull)
+enum SettingCategory {
+  GENERAL
+  AGV
+  SYSTEM
+}
 
-  createdAt         DateTime  @default(now())
-  dueDate           DateTime?
+model User {
+  id           String           @id @default(uuid())
+  username     String
+  email        String           @unique
+  passwordHash String           @map("password_hash")
+  role         Role             @default(OPERATOR)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  createdTasks   Task[]           @relation("UserCreatedTasks")
+  systemSettings SystemSetting[]  @relation("UserUpdatedSettings")
+
+  @@map("users")
 }
 
 // 車両 (AGV) モデル
 model Vehicle {
-  id            String        @id // 例: "AGV-01"
-  name          String?
+  id            String        @id // 例: AGV-01
+  name          String
   status        VehicleStatus @default(IDLE)
-  batteryLevel  Int           @default(100)
-  currentX      Float         @default(0.0)
-  currentY      Float         @default(0.0)
-  currentTheta  Float?
-  lastHeartbeat DateTime      @default(now())
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  batteryLevel  Int           @default(100) @map("battery_level")
+  currentX      Float         @default(0.0) @map("current_x")
+  currentY      Float         @default(0.0) @map("current_y")
+  currentTheta  Float?        @map("current_theta")
+  currentMapId  String?       @map("current_map_id")
+  lastHeartbeat DateTime?     @map("last_heartbeat")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  logs  VehicleLog[]
   tasks Task[]
+  logs  VehicleLog[]
+
+  @@map("vehicles")
 }
 
-// 車両ログモデル
+// タスクモデル
+model Task {
+  id                String     @id @default(uuid())
+  title             String
+  status            TaskStatus @default(PENDING)
+  priority          Int        @default(3) // 1: Low ~ 5: High
+  assignedVehicleId String?    @map("assigned_vehicle_id")
+  startLocation     String?    @map("start_location")
+  targetLocation    String?    @map("target_location")
+  createdByUserId   String?    @map("created_by_user_id")
+  scheduledAt       DateTime?  @map("scheduled_at")
+  startedAt         DateTime?  @map("started_at")
+  completedAt       DateTime?  @map("completed_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  assignedVehicle Vehicle?      @relation(fields: [assignedVehicleId], references: [id], onDelete: SetNull)
+  createdByUser   User?         @relation("UserCreatedTasks", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  histories       TaskHistory[]
+
+  @@map("tasks")
+}
+
 model VehicleLog {
-  id        Int      @id @default(autoincrement())
-  vehicleId String
-  logLevel  LogLevel @default(INFO)
+  id        BigInt   @id @default(autoincrement())
+  vehicleId String   @map("vehicle_id")
+  logLevel  LogLevel @map("log_level")
   message   String
   details   Json?
   timestamp DateTime @default(now())
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_logs")
 }
 
-// ステータス Enum
-enum TaskStatus {
-  PENDING
-  ASSIGNED
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-// 設定カテゴリ Enum
-enum SettingCategory {
-  GENERAL
-  DISPATCH
-  SAFETY
-  NETWORK
-}
-
-// タスク履歴モデル
 model TaskHistory {
-  id        String     @id @default(uuid())
-  taskId    String
-  vehicleId String?
+  id        BigInt     @id @default(autoincrement())
+  taskId    String     @map("task_id")
   status    TaskStatus
-  message   String?
+  note      String?
   timestamp DateTime   @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@map("task_histories")
 }
 
-// システム設定モデル
 model SystemSetting {
-  id          String          @id @default(uuid())
-  key         String          @unique
-  value       String
-  category    SettingCategory @default(GENERAL)
-  description String?
-  updatedAt   DateTime        @updatedAt
+  key             String          @id // 例: mqtt.broker_url
+  value           String
+  category        SettingCategory @default(GENERAL)
+  description     String?
+  updatedByUserId String?         @map("updated_by_user_id")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  updatedByUser User? @relation("UserUpdatedSettings", fields: [updatedByUserId], references: [id], onDelete: SetNull)
 
   @@map("system_settings")
 }
